@@ -1,7 +1,7 @@
 ManifestFileVersion: 0
-CRC: 380955626
+CRC: 2101756051
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
-      Name: catfaces
+      Name: cats
       Dependencies: {}

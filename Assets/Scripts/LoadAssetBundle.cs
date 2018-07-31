@@ -1,16 +1,17 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.UI;
 
 public class LoadAssetBundle : MonoBehaviour {
 
-	// Use this for initialization
-	void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
+	public void LoadAsset()
+	{
+		AssetBundle catBundle = AssetBundle.LoadFromFile(Application.dataPath + "/AssetBundles/StandaloneWindows/cats");
+		if(catBundle == null)
+		{
+			Debug.Log("Cat bundle failed to load");
+			return;
+		}
+		Sprite catSpriteSmall = catBundle.LoadAsset<Sprite>("cat_big");
+		GetComponent<Image>().sprite = catSpriteSmall;
 	}
 }

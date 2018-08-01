@@ -342,7 +342,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 421657511}
-        m_MethodName: LoadAsset
+        m_MethodName: LoadAssetRemoteAndSave
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

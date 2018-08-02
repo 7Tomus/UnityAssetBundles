@@ -1,0 +1,19 @@
+ManifestFileVersion: 0
+CRC: 3741882156
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 6662eb1ff17c157e136d21fba86d67a0
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: b474380d27eb4bc856799e9c585c4864
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+Assets:
+- Assets/Images/cat.jpg
+- Assets/Images/cat_big.jpg
+Dependencies: []

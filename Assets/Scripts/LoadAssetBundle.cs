@@ -7,7 +7,10 @@ using System;
 
 public class LoadAssetBundle : MonoBehaviour {
 
-	private string uri = "http://beta.biathlonmania.com/assetBundle/cats";
+	public Slider progressBar;
+	public string uri;
+
+	private string assetPath;
 
 	public void LoadAssetLocal()
 	{
@@ -26,8 +29,15 @@ public class LoadAssetBundle : MonoBehaviour {
 		StartCoroutine(LoadFromWeb(uri));
 	}
 
-	public void LoadAssetRemoteAndSave()
+	public void OnClick1()
 	{
+	#if UNITY_EDITOR
+			uri = "http://beta.biathlonmania.com/assetBundle/Windows/cats";
+	#elif UNITY_ANDROID
+			uri = "http://beta.biathlonmania.com/assetBundle/Android/cats";
+	#else
+			uri = "http://beta.biathlonmania.com/assetBundle/Windows/cats";
+	#endif
 		StartCoroutine(LoadFromWebAndSave(uri));
 	}
 
@@ -52,18 +62,22 @@ public class LoadAssetBundle : MonoBehaviour {
 	{
 		UnityWebRequest www = UnityWebRequest.Get(uri);
 		DownloadHandler handle = www.downloadHandler;
+		StartCoroutine(ShowProgress(www));
 		yield return www.Send();
 
 		if(www.isNetworkError || www.isHttpError)
 		{
 			Debug.LogError(www.error);
+			yield return null;
 		}
 		else
 		{
-			string dataFileName = "catss";
+			string dataFileName = "cats";
 			string tempPath = Path.Combine(Application.persistentDataPath, "AssetData");
 			tempPath = Path.Combine(tempPath, dataFileName + ".unity3d");
-			Save(handle.data, tempPath);			
+			assetPath = tempPath;
+			Save(handle.data, tempPath);
+			yield return StartCoroutine(LoadAssetBundleFromStorage(tempPath));
 		}
 	}
 
@@ -85,22 +99,32 @@ public class LoadAssetBundle : MonoBehaviour {
 		}
 	}
 
-	IEnumerable LoadAssetBundleFromStorage(string path)
+	IEnumerator LoadAssetBundleFromStorage(string path)
 	{
 		AssetBundleCreateRequest bundle = AssetBundle.LoadFromFileAsync(path);
 		yield return bundle;
-
 		AssetBundle myLoadedAssetBundle = bundle.assetBundle;
 		if(myLoadedAssetBundle == null)
 		{
 			Debug.Log("Failed to load AssetBundle!");
-			yield break;
+			yield return null;
 		}
 
-		AssetBundleRequest request = myLoadedAssetBundle.LoadAssetAsync<GameObject>("cat");
+		AssetBundleRequest request = myLoadedAssetBundle.LoadAssetAsync<Sprite>("cat");
 		yield return request;
 
 		Sprite catSpriteSmall = request.asset as Sprite;
 		GetComponent<Image>().sprite = catSpriteSmall;
+	}
+
+	private IEnumerator ShowProgress(UnityWebRequest www)
+	{
+		while(!www.isDone)
+		{
+			progressBar.value = www.downloadProgress;
+			yield return new WaitForSeconds(0.1f);
+		}
+		progressBar.value = 1;
+		Debug.Log("Done");
 	}
 }

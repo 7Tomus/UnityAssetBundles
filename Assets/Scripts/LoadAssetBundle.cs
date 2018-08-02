@@ -10,96 +10,56 @@ public class LoadAssetBundle : MonoBehaviour {
 	public Slider progressBar;
 	public string uri;
 
-	private string assetPath;
-
-	public void LoadAssetLocal()
-	{
-		AssetBundle catBundle = AssetBundle.LoadFromFile(Application.dataPath + "/AssetBundles/StandaloneWindows/cats");
-		if(catBundle == null)
-		{
-			Debug.Log("Cat bundle failed to load");
-			return;
-		}
-		Sprite catSpriteSmall = catBundle.LoadAsset<Sprite>("cat_big");
-		GetComponent<Image>().sprite = catSpriteSmall;
-	}
-
-	public void LoadAssetRemote()
-	{
-		StartCoroutine(LoadFromWeb(uri));
-	}
-
-	public void OnClick1()
+	private void Awake()
 	{
 	#if UNITY_EDITOR
-			uri = "http://beta.biathlonmania.com/assetBundle/Windows/cats";
+		uri = "http://beta.biathlonmania.com/assetBundle/Windows/cats";
 	#elif UNITY_ANDROID
-			uri = "http://beta.biathlonmania.com/assetBundle/Android/cats";
+		uri = "http://beta.biathlonmania.com/assetBundle/Android/cats";
+	#elif UNITY_IOS
+		uri = "http://beta.biathlonmania.com/assetBundle/iOS/cats";
 	#else
-			uri = "http://beta.biathlonmania.com/assetBundle/Windows/cats";
+		uri = "http://beta.biathlonmania.com/assetBundle/Windows/cats";
 	#endif
-		StartCoroutine(LoadFromWebAndSave(uri));
 	}
 
-	IEnumerator LoadFromWeb(string uri)
+	public void OnClick()
 	{
-		UnityWebRequest www = UnityWebRequestAssetBundle.GetAssetBundle(uri);
-		yield return www.SendWebRequest();
-		
-		if(www.isNetworkError || www.isHttpError)
-		{
-			Debug.LogError(www.error);
-		}
-		else
-		{
-			AssetBundle catBundle = DownloadHandlerAssetBundle.GetContent(www);
-			Sprite catSpriteSmall = catBundle.LoadAsset<Sprite>("cat_big");
-			GetComponent<Image>().sprite = catSpriteSmall;
-		}
+		StartCoroutine(LoadFromWebAndSave(uri));
 	}
 
 	IEnumerator LoadFromWebAndSave(string uri)
 	{
-		UnityWebRequest www = UnityWebRequest.Get(uri);
-		DownloadHandler handle = www.downloadHandler;
-		StartCoroutine(ShowProgress(www));
-		yield return www.Send();
+		string bundleName = "cats";
+		string path = Path.Combine(Application.persistentDataPath, "AssetData");
+		path = Path.Combine(path, bundleName + ".unity3d");
 
-		if(www.isNetworkError || www.isHttpError)
+		if(File.Exists(path))
 		{
-			Debug.LogError(www.error);
-			yield return null;
+			Debug.Log("Bundle is already in storage");
+			yield return StartCoroutine(LoadFromStorage(path));
 		}
 		else
 		{
-			string dataFileName = "cats";
-			string tempPath = Path.Combine(Application.persistentDataPath, "AssetData");
-			tempPath = Path.Combine(tempPath, dataFileName + ".unity3d");
-			assetPath = tempPath;
-			Save(handle.data, tempPath);
-			yield return StartCoroutine(LoadAssetBundleFromStorage(tempPath));
-		}
+			UnityWebRequest www = UnityWebRequest.Get(uri);
+			DownloadHandler handle = www.downloadHandler;
+			StartCoroutine(ShowProgress(www));
+			yield return www.Send();
+
+			if(www.isNetworkError || www.isHttpError)
+			{
+				Debug.LogError(www.error);
+				yield return null;
+			}
+			else
+			{
+				Save(handle.data, path);
+				yield return StartCoroutine(LoadFromStorage(path));
+			}
+		}	
 	}
 
-	private void Save(byte[] data, string path)
-	{
-		if(!Directory.Exists(Path.GetDirectoryName(path)))
-		{
-			Directory.CreateDirectory(Path.GetDirectoryName(path));
-		}
-
-		try
-		{
-			File.WriteAllBytes(path, data);
-			Debug.Log("Saved Data to: " + path.Replace("/", "\\"));
-		}
-		catch(Exception e)
-		{
-			Debug.LogWarning("Failed To Save Data" + e.Message);
-		}
-	}
-
-	IEnumerator LoadAssetBundleFromStorage(string path)
+	IEnumerator LoadFromStorage(string path)
 	{
 		AssetBundleCreateRequest bundle = AssetBundle.LoadFromFileAsync(path);
 		yield return bundle;
@@ -127,4 +87,60 @@ public class LoadAssetBundle : MonoBehaviour {
 		progressBar.value = 1;
 		Debug.Log("Done");
 	}
+
+	private void Save(byte[] data, string path)
+	{
+		if(!Directory.Exists(Path.GetDirectoryName(path)))
+		{
+			Directory.CreateDirectory(Path.GetDirectoryName(path));
+		}
+
+		try
+		{
+			File.WriteAllBytes(path, data);
+			Debug.Log("Saved Data to: " + path.Replace("/", "\\"));
+		}
+		catch(Exception e)
+		{
+			Debug.LogWarning("Failed To Save Data" + e.Message);
+		}
+	}
+
+	#region NotUsedAnymore
+
+	public void LoadAssetRemote()
+	{
+		StartCoroutine(LoadFromWeb(uri));
+	}
+
+	IEnumerator LoadFromWeb(string uri)
+	{
+		UnityWebRequest www = UnityWebRequestAssetBundle.GetAssetBundle(uri);
+		yield return www.SendWebRequest();
+
+		if(www.isNetworkError || www.isHttpError)
+		{
+			Debug.LogError(www.error);
+		}
+		else
+		{
+			AssetBundle catBundle = DownloadHandlerAssetBundle.GetContent(www);
+			Sprite catSpriteSmall = catBundle.LoadAsset<Sprite>("cat_big");
+			GetComponent<Image>().sprite = catSpriteSmall;
+		}
+	}
+
+	public void LoadAssetLocal()
+	{
+		AssetBundle catBundle = AssetBundle.LoadFromFile(Application.dataPath + "/AssetBundles/StandaloneWindows/cats");
+		if(catBundle == null)
+		{
+			Debug.Log("Cat bundle failed to load");
+			return;
+		}
+		Sprite catSpriteSmall = catBundle.LoadAsset<Sprite>("cat_big");
+		GetComponent<Image>().sprite = catSpriteSmall;
+	}
+
+	#endregion
 }

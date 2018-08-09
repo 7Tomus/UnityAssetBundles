@@ -7,6 +7,7 @@ using System;
 
 public class LoadAssetBundle : MonoBehaviour {
 
+	public Button button;
 	public Slider progressBar;
 	public string uri;
 
@@ -36,7 +37,6 @@ public class LoadAssetBundle : MonoBehaviour {
 
 		if(File.Exists(path))
 		{
-			Debug.Log("Bundle is already in storage");
 			yield return StartCoroutine(LoadFromStorage(path, bundleName));
 		}
 		else
@@ -96,13 +96,15 @@ public class LoadAssetBundle : MonoBehaviour {
 
 	private IEnumerator ShowProgress(UnityWebRequest www)
 	{
+		button.interactable = false;
 		while(!www.isDone)
 		{
 			progressBar.value = www.downloadProgress;
 			yield return new WaitForSeconds(0.1f);
 		}
-		progressBar.value = 1;
+		progressBar.value = 0;
 		Debug.Log("Done");
+		button.interactable = true;
 	}
 
 	private void Save(byte[] data, string path)
@@ -121,6 +123,11 @@ public class LoadAssetBundle : MonoBehaviour {
 		{
 			Debug.LogWarning("Failed To Save Data" + e.Message);
 		}
+	}
+
+	public void ClearImage()
+	{
+		GetComponent<Image>().sprite = null;
 	}
 
 	#region NotUsedAnymore

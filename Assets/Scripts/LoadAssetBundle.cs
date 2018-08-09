@@ -10,7 +10,7 @@ public class LoadAssetBundle : MonoBehaviour {
 	public Slider progressBar;
 	public string uri;
 
-	private void Awake()
+	private void Start()
 	{
 	#if UNITY_EDITOR
 		uri = "http://beta.biathlonmania.com/assetBundle/Windows/cats";
@@ -32,12 +32,12 @@ public class LoadAssetBundle : MonoBehaviour {
 	{
 		string bundleName = "cats";
 		string path = Path.Combine(Application.persistentDataPath, "AssetData");
-		path = Path.Combine(path, bundleName + ".unity3d");
+		path = Path.Combine(path, bundleName);
 
 		if(File.Exists(path))
 		{
 			Debug.Log("Bundle is already in storage");
-			yield return StartCoroutine(LoadFromStorage(path));
+			yield return StartCoroutine(LoadFromStorage(path, bundleName));
 		}
 		else
 		{
@@ -54,20 +54,24 @@ public class LoadAssetBundle : MonoBehaviour {
 			else
 			{
 				Save(handle.data, path);
-				yield return StartCoroutine(LoadFromStorage(path));
+				yield return StartCoroutine(LoadFromStorage(path, bundleName));
 			}
 		}	
 	}
 
-	IEnumerator LoadFromStorage(string path)
+	IEnumerator LoadFromStorage(string path, string bundleName)
 	{
-		AssetBundleCreateRequest bundle = AssetBundle.LoadFromFileAsync(path);
-		yield return bundle;
-		AssetBundle myLoadedAssetBundle = bundle.assetBundle;
+		AssetBundle myLoadedAssetBundle = CheckIfBundleIsLoaded(bundleName);
 		if(myLoadedAssetBundle == null)
 		{
-			Debug.Log("Failed to load AssetBundle!");
-			yield return null;
+			AssetBundleCreateRequest bundle = AssetBundle.LoadFromFileAsync(path);
+			yield return bundle;
+			myLoadedAssetBundle = bundle.assetBundle;
+			if(myLoadedAssetBundle == null)
+			{
+				Debug.Log("Failed to load AssetBundle!");
+				yield return null;
+			}
 		}
 
 		AssetBundleRequest request = myLoadedAssetBundle.LoadAssetAsync<Sprite>("cat");
@@ -75,6 +79,19 @@ public class LoadAssetBundle : MonoBehaviour {
 
 		Sprite catSpriteSmall = request.asset as Sprite;
 		GetComponent<Image>().sprite = catSpriteSmall;
+	}
+
+	private AssetBundle CheckIfBundleIsLoaded(string bundleName)
+	{
+		AssetBundle[] bundles = Resources.FindObjectsOfTypeAll(typeof(AssetBundle)) as AssetBundle[];
+		for(int i = 0; i < bundles.Length; i++)
+		{
+			if(bundleName.Equals(bundles[i].name))
+			{
+				return bundles[i];
+			}
+		}
+		return null;
 	}
 
 	private IEnumerator ShowProgress(UnityWebRequest www)

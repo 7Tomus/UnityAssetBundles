@@ -44,7 +44,7 @@ public class LoadAssetBundle : MonoBehaviour {
 			UnityWebRequest www = UnityWebRequest.Get(uri);
 			DownloadHandler handle = www.downloadHandler;
 			StartCoroutine(ShowProgress(www));
-			yield return www.Send();
+			yield return www.SendWebRequest();
 
 			if(www.isNetworkError || www.isHttpError)
 			{
